@@ -16,7 +16,7 @@ Adafruit_LEDBackpack matrix4 = Adafruit_LEDBackpack();
 TM1637Display LVDisplay = TM1637Display(LVCLK, LVDIO);
 TM1637Display SCDisplay = TM1637Display(SCCLK, SCDIO);
 
-// ! You should change this part to your own pin
+
 int redLed = 4;
 int yellowLed = 3;
 int greenLed = 2;
@@ -46,6 +46,7 @@ uint8_t originalRightRoad = 0b00001000;
 uint8_t noneRoad = 0b00000000;
 uint8_t leftRoad[16] = {};
 uint8_t rightRoad[16] = {};
+// * 0b12345678   <---   0b18765432
 int roadEdges[16][2]; // * Minimum 0, Maximum 15
 int carPosition[2] = {7, 8}; // * 0 ~ 15
 
@@ -75,8 +76,6 @@ uint8_t flipBinary(uint8_t originalBin);
 uint8_t setCarBin(uint8_t binary, int carPosition);
 bool isAbleToShift(int shift);
 uint8_t shiftRoad(uint8_t binary, int shift);
-// ! Not sure that every 8*8 led board has this problem, if not, you should delete the fixBinary function
-// * 0b12345678   <---   0b18765432
 uint8_t fixBinary(uint8_t binary);
 bool isCrash();
 void decideNextRoad(int gameLevel);
@@ -220,6 +219,7 @@ void loop(){
 
     // * Update minimum game level
     gameLevel = max(gameLevel, 1 + score / 500);
+    showLVDisplay(gameLevel);
 
     // * If the score is greater than 1000, 3000, 5000, 7000, the roadLevel will increase, the road's width will decrease 1 unit
     if (score > 7000 && roadLevel < 4) {
@@ -557,14 +557,22 @@ void upgradeRoad(int roadLevel) {
   } else if (roadLevel == 3) {
     if (leftRoad[0] == 0b00000001){
       rightRoad[0] |= 0b10000000;
+      leftRoad[0] = shiftRoad(leftRoad[0], 1);
+    } else if (leftRoad[0] == 0b10000001) {
+      leftRoad[0] = 0b01000000;
+    } else {
+      leftRoad[0] = shiftRoad(leftRoad[0], 1);
     }
-    leftRoad[0] = shiftRoad(leftRoad[0], 1);
     roadEdges[0][0] ++;
   } else if (roadLevel == 4) {
     if (rightRoad[0] == 0b10000000){
       leftRoad[0] |= 0b00000001;
+      rightRoad[0] = shiftRoad(rightRoad[0], -1);
+    } else if (rightRoad[0] == 0b10000010) {
+      rightRoad[0] = 0b10000100;
+    } else {
+      rightRoad[0] = shiftRoad(rightRoad[0], -1);
     }
-    rightRoad[0] = shiftRoad(rightRoad[0], -1);
     roadEdges[0][1] --;
   }
 }
